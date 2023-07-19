@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Patch,
   Post,
   UseGuards,
@@ -26,7 +27,9 @@ export class ArticleController {
   }
 
   @Get(':slug')
-  getArticle() {}
+  getArticle(@Param('slug') slug: string) {
+    return this.articleService.getArticle(slug);
+  }
 
   @UseGuards(JwtGuard)
   @Delete(':slug')

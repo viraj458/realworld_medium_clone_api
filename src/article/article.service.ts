@@ -8,7 +8,7 @@ export class ArticleService {
   constructor(private prisma: PrismaService) {}
 
   async createArticle(userId: number, dto: CreateArticleDto) {
-    const slug = slugify(dto.title);
+    const slug = slugify(dto.title, { lower: true });
     const article = await this.prisma.article.create({
       data: {
         slug,
@@ -50,7 +50,35 @@ export class ArticleService {
     return { article: formattedData };
   }
 
-  getArticle() {}
+  async getArticle(slug: string) {
+    const article = await this.prisma.article.findFirst({
+      where: {
+        slug,
+      },
+      include: {
+        author: true,
+        tags: true,
+      },
+    });
+    const formattedAuthor = {
+      username: article.author.username,
+      bio: article.author.bio,
+      image: article.author.image,
+    };
+
+    const formattedData = {
+      slug: article.slug,
+      title: article.title,
+      description: article.description,
+      body: article.description,
+      tagList: article.tags,
+      createdAt: article.createdAt,
+      updatedAt: article.updatedAt,
+      author: formattedAuthor,
+    };
+
+    return { article: formattedData };
+  }
 
   deleteArticle() {}
 
