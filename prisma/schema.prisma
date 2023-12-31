@@ -46,4 +46,3 @@ model Tag {
   name     String
   articles Article[]
 }
-

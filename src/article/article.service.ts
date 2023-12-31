@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { CreateArticleDto } from './dto';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { CreateArticleDto, UpdateArticleDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import slugify from 'slugify';
 
@@ -51,36 +51,82 @@ export class ArticleService {
   }
 
   async getArticle(slug: string) {
-    const article = await this.prisma.article.findFirst({
+    try {
+      const article = await this.prisma.article.findUnique({
+        where: {
+          slug: slug,
+        },
+        include: {
+          author: true,
+          tags: true,
+        },
+      });
+      const formattedAuthor = {
+        username: article.author.username,
+        bio: article.author.bio,
+        image: article.author.image,
+      };
+
+      const formattedData = {
+        slug: article.slug,
+        title: article.title,
+        description: article.description,
+        body: article.description,
+        tagList: article.tags,
+        createdAt: article.createdAt,
+        updatedAt: article.updatedAt,
+        author: formattedAuthor,
+      };
+
+      return { article: formattedData };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async deleteArticle(slug: string, userId: number) {
+    const article = await this.prisma.article.findUnique({
       where: {
         slug,
       },
-      include: {
-        author: true,
-        tags: true,
+    });
+
+    if (!article || article.authorId !== userId) {
+      throw new ForbiddenException('Access denied!!!');
+    }
+
+    await this.prisma.article.delete({
+      where: {
+        slug,
       },
     });
-    const formattedAuthor = {
-      username: article.author.username,
-      bio: article.author.bio,
-      image: article.author.image,
-    };
-
-    const formattedData = {
-      slug: article.slug,
-      title: article.title,
-      description: article.description,
-      body: article.description,
-      tagList: article.tags,
-      createdAt: article.createdAt,
-      updatedAt: article.updatedAt,
-      author: formattedAuthor,
-    };
-
-    return { article: formattedData };
   }
 
-  deleteArticle() {}
+  async updateArticle(slug: string, userId: number, dto: UpdateArticleDto) {
+    const article = await this.prisma.article.findUnique({
+      where: {
+        slug,
+      },
+    });
 
-  updateArticle() {}
+    if (!article || article.authorId !== userId) {
+      throw new ForbiddenException('Access denied!!');
+    }
+
+    const updated = await this.prisma.article.update({
+      where: {
+        slug,
+      },
+      data: {
+        ...dto,
+        tags: {
+          create: dto.tagList.map((name) => ({
+            name,
+          })),
+        },
+      },
+    });
+
+    return { article: updated };
+  }
 }

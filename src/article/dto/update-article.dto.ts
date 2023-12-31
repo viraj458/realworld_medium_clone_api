@@ -14,5 +14,5 @@ export class UpdateArticleDto {
   body?: string;
 
   @IsNotEmpty()
-  tags?: string[];
+  tagList?: string[];
 }

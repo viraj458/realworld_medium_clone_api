@@ -11,7 +11,7 @@ import {
 import { JwtGuard } from '../auth/guard';
 import { ArticleService } from './article.service';
 import { GetUser } from '../user/decorator';
-import { CreateArticleDto } from './dto';
+import { CreateArticleDto, UpdateArticleDto } from './dto';
 
 @Controller('articles')
 export class ArticleController {
@@ -20,10 +20,10 @@ export class ArticleController {
   @UseGuards(JwtGuard)
   @Post()
   createArticle(
-    @GetUser('id') authorId: number,
+    @GetUser('id') userId: number,
     @Body('article') dto: CreateArticleDto,
   ) {
-    return this.articleService.createArticle(authorId, dto);
+    return this.articleService.createArticle(userId, dto);
   }
 
   @Get(':slug')
@@ -33,9 +33,17 @@ export class ArticleController {
 
   @UseGuards(JwtGuard)
   @Delete(':slug')
-  deleteArticle() {}
+  deleteArticle(@Param('slug') slug: string, @GetUser('id') userId: number) {
+    return this.articleService.deleteArticle(slug, userId);
+  }
 
   @UseGuards(JwtGuard)
   @Patch(':slug')
-  updateArticle() {}
+  updateArticle(
+    @Param('slug') slug: string,
+    @GetUser('id') userId: number,
+    @Body('article') dto: UpdateArticleDto,
+  ) {
+    return this.articleService.updateArticle(slug, userId, dto);
+  }
 }
